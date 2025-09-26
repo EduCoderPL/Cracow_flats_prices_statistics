@@ -37,7 +37,7 @@ CITY_COORDINATES = [50.0614, 19.9366]
 CSS_TITLE_STYLE = "font-size:18px; color:white; text-shadow: 2px 2px 0px #000000"
 
 
-def scrap_offers(max_websites=2):
+def scrap_offers(max_websites=2) -> pd.DataFrame:
     """Returns list of offers as a DataFrame"""
 
     data = []
@@ -80,7 +80,7 @@ def scrap_one_page(page_number: int):
 
 
 
-def edit_dataframe_data(data_frame: pd.DataFrame):
+def edit_dataframe(data_frame: pd.DataFrame):
 
     data_frame["Cena"] = (
         data_frame["Cena"]
@@ -94,7 +94,7 @@ def edit_dataframe_data(data_frame: pd.DataFrame):
     data_frame["Cena_m2"] = data_frame["Cena"] / data_frame["Metraż"]
 
 
-def group_and_aggregate_data(data_frame: pd.DataFrame):
+def group_and_aggregate_data(data_frame: pd.DataFrame) -> pd.DataFrame:
 
     result_data_frame = data_frame.groupby("Dzielnica").agg({
         "Tytuł": lambda x: list(x),
@@ -105,13 +105,10 @@ def group_and_aggregate_data(data_frame: pd.DataFrame):
     result_data_frame["Liczba ofert"] = result_data_frame["Tytuł"].apply(len)
     result_data_frame = result_data_frame.reset_index()
 
-    print(result_data_frame)
-    print(result_data_frame)
-
     return result_data_frame
 
 
-def generate_geodata(offers_data):
+def generate_geodata(offers_data: pd.DataFrame) -> pd.DataFrame:
     result_geodata = gpd.read_file("../districts/krakow-dzielnice.geojson")
     result_geodata["name"] = result_geodata["name"].map(geopandas_to_olx_names_dict)
     result_geodata = result_geodata.merge(offers_data, left_on="name", right_on="Dzielnica", how="left")
@@ -178,22 +175,31 @@ def generate_map(map_data):
             popup=folium.Popup(popup_html, max_width=300)
         ).add_to(fg_cena)
 
+        # folium.map.Marker(
+        #     [centroid.y, centroid.x],
+        #     icon=folium.DivIcon(
+        #         html=f"<div style='{CSS_TITLE_STYLE}'> OFERTY: {int(row['Liczba ofert'])}</div><br>",
+        #         icon_anchor=(-30, 60),
+        #         icon_size=(50, 50)
+        #     )
+        # ).add_to(fg_oferty)
+        # folium.map.Marker(
+        #     [centroid.y, centroid.x],
+        #     icon=folium.DivIcon(
+        #         html=f"<div style='{CSS_TITLE_STYLE}'>Cena/m2: {row['Średnia cena/m²']:.0f} zł</div>",
+        #         icon_anchor=(-30, 60),
+        #         icon_size=(50, 50)
+        #     )
+        # ).add_to(fg_cena)
+        #
         folium.map.Marker(
             [centroid.y, centroid.x],
             icon=folium.DivIcon(
-                html=f"<div style='{CSS_TITLE_STYLE}'> OFERTY: {int(row['Liczba ofert'])}</div><br>",
+                html=f"<div style='{CSS_TITLE_STYLE}'>{row['name']}</div>",
                 icon_anchor=(-30, 60),
                 icon_size=(50, 50)
             )
-        ).add_to(fg_oferty)
-        folium.map.Marker(
-            [centroid.y, centroid.x],
-            icon=folium.DivIcon(
-                html=f"<div style='{CSS_TITLE_STYLE}'>Cena/m2: {row['Średnia cena/m²']:.0f} zł</div>",
-                icon_anchor=(-30, 60),
-                icon_size=(50, 50)
-            )
-        ).add_to(fg_cena)
+        ).add_to(m)
 
     fg_oferty.add_to(m)
     fg_cena.add_to(m)
@@ -204,10 +210,10 @@ def generate_map(map_data):
 
 
 # OBRÓBKA DANYCH
-df = scrap_offers(3)
+df: pd.DataFrame = scrap_offers(3)
 
 df.to_csv("mieszkania_krakow.csv", index=False, encoding="utf-8")
-edit_dataframe_data(df)
+edit_dataframe(df)
 
 grouped_olx_data = group_and_aggregate_data(df)
 regions_geodata = generate_geodata(grouped_olx_data)
