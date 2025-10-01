@@ -24,3 +24,5 @@ BASE_URL = "https://www.olx.pl/nieruchomosci/mieszkania/sprzedaz/krakow/"
 CITY_COORDINATES = [50.0614, 19.9366]
 
 CSS_TITLE_STYLE = "font-size:18px; color:white; text-shadow: 2px 2px 0px #000000"
+
+OUTPUT_FILE_NAME = "mapa_oferty_kraków_test.html"
